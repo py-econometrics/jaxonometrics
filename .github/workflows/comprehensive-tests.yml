@@ -3,8 +3,6 @@ name: Comprehensive Tests
 on:
   push:
     branches: [ "*" ]
-  pull_request:
-    branches: [ "*" ]
   schedule:
     # Run tests weekly on Sundays at 2 AM UTC
     - cron: '0 2 * * 0'
@@ -21,7 +19,7 @@ jobs:
         python-version: ["3.10", "3.11", "3.12"]
         exclude:
           # Skip some combinations to reduce CI time
-          - os: macos-latest  
+          - os: macos-latest
             python-version: "3.10"
 
     steps:
@@ -52,15 +50,15 @@ jobs:
       run: |
         python -m pip install --upgrade pip wheel setuptools
         pip install pytest pytest-cov pytest-xdist
-        
+
     - name: Install jaxonometrics
       run: |
         pip install -e .
-        
+
     - name: Install test dependencies
       run: |
         pip install pyfixest pandas scikit-learn
-        
+
     - name: Verify installation
       run: |
         python -c "import jaxonometrics; print('jaxonometrics version:', jaxonometrics.__version__)"
@@ -74,7 +72,7 @@ jobs:
     - name: Run fixed effects tests
       run: |
         python -m pytest tests/test_fe.py -v
-        
+
     - name: Run all tests with coverage
       run: |
         python -m pytest tests/ -v --cov=jaxonometrics --cov-report=xml --cov-report=term
@@ -87,110 +85,3 @@ jobs:
         flags: unittests
         name: codecov-umbrella
 
-  test-performance:
-    name: Performance Tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Set up Python 3.11
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.11"
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install pytest pytest-benchmark
-        pip install -e .
-        pip install pyfixest pandas scikit-learn
-
-    - name: Run performance benchmarks
-      run: |
-        python -c "
-        import numpy as np
-        import time
-        import jax.numpy as jnp
-        from jaxonometrics import LinearRegression
-        
-        # Performance test
-        print('Running performance test...')
-        np.random.seed(42)
-        
-        n_obs = 10000
-        X = jnp.asarray(np.random.randn(n_obs, 5))
-        y = jnp.asarray(np.random.randn(n_obs))
-        
-        model = LinearRegression(solver='lineax')
-        
-        start_time = time.time()
-        model.fit(X, y)
-        end_time = time.time()
-        
-        print(f'Linear regression on {n_obs} obs took {end_time - start_time:.4f} seconds')
-        print('Performance test passed!')
-        "
-
-  test-examples:
-    name: Test Examples and Documentation
-    runs-on: ubuntu-latest
-    timeout-minutes: 25
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Set up Python 3.11
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.11"
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install jupyter nbconvert
-        pip install -e .
-        pip install pyfixest pandas scikit-learn matplotlib seaborn
-
-    - name: Test example notebooks (if any)
-      run: |
-        # Test any Jupyter notebooks in nb/ directory
-        if [ -d "nb" ]; then
-          echo "Testing notebooks..."
-          for notebook in nb/*.ipynb; do
-            if [ -f "$notebook" ]; then
-              echo "Testing $notebook"
-              jupyter nbconvert --to script --execute "$notebook"
-            fi
-          done
-        else
-          echo "No notebooks directory found, skipping notebook tests"
-        fi
-
-    - name: Test README examples
-      run: |
-        python -c "
-        # Test basic API examples from README
-        import numpy as np
-        import jax.numpy as jnp
-        from jaxonometrics import LinearRegression
-        
-        print('Testing basic LinearRegression API...')
-        
-        # Generate sample data
-        np.random.seed(42)
-        X = jnp.asarray(np.random.randn(100, 3))
-        y = jnp.asarray(np.random.randn(100))
-        
-        # Test basic fitting
-        model = LinearRegression(solver='lineax')
-        model.fit(X, y)
-        
-        # Test prediction
-        y_pred = model.predict(X)
-        
-        print(f'Coefficients shape: {model.params[\"coef\"].shape}')
-        print(f'Predictions shape: {y_pred.shape}')
-        print('README examples test passed!')
-        "

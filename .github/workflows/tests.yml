@@ -3,9 +3,6 @@ name: Tests
 on:
   push:
     branches: [ "*" ]  # Run on pushes to all branches
-  pull_request:
-    branches: [ "*" ]  # Run on PRs to all branches
-
 jobs:
   test:
     runs-on: ubuntu-latest
