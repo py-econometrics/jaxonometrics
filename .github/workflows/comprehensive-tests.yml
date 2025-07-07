@@ -13,15 +13,14 @@ jobs:
   test-matrix:
     name: Test Python ${{ matrix.python-version }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.10", "3.11", "3.12"]
         exclude:
           # Skip some combinations to reduce CI time
-          - os: macos-latest
-            python-version: "3.9"
           - os: macos-latest  
             python-version: "3.10"
 
@@ -60,7 +59,7 @@ jobs:
         
     - name: Install test dependencies
       run: |
-        pip install pyfixest pandas
+        pip install pyfixest pandas scikit-learn
         
     - name: Verify installation
       run: |
@@ -91,6 +90,7 @@ jobs:
   test-performance:
     name: Performance Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -105,7 +105,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install pytest pytest-benchmark
         pip install -e .
-        pip install pyfixest pandas
+        pip install pyfixest pandas scikit-learn
 
     - name: Run performance benchmarks
       run: |
@@ -136,6 +136,7 @@ jobs:
   test-examples:
     name: Test Examples and Documentation
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -150,7 +151,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install jupyter nbconvert
         pip install -e .
-        pip install pyfixest pandas matplotlib seaborn
+        pip install pyfixest pandas scikit-learn matplotlib seaborn
 
     - name: Test example notebooks (if any)
       run: |
