@@ -9,6 +9,7 @@ from .causal import EntropyBalancing, IPW, AIPW # Added IPW, AIPW
 from .gmm import GMM, LinearIVGMM, TwoStepGMM
 from .linear import LinearRegression
 from .mle import LogisticRegression, PoissonRegression, MaximumLikelihoodEstimator # Added MLE models
+from .demean import demean_jax, prepare_fixed_effects
 
 __all__ = [
     "BaseEstimator",
@@ -22,4 +23,6 @@ __all__ = [
     "MaximumLikelihoodEstimator",
     "LogisticRegression",
     "PoissonRegression",
+    "demean_jax",
+    "prepare_fixed_effects",
 ]
