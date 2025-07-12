@@ -1,0 +1,87 @@
+name: Comprehensive Tests
+
+on:
+  push:
+    branches: [ "*" ]
+  schedule:
+    # Run tests weekly on Sundays at 2 AM UTC
+    - cron: '0 2 * * 0'
+
+jobs:
+  test-matrix:
+    name: Test Python ${{ matrix.python-version }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python-version: ["3.10", "3.11", "3.12"]
+        exclude:
+          # Skip some combinations to reduce CI time
+          - os: macos-latest
+            python-version: "3.10"
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-${{ matrix.python-version }}-
+          ${{ runner.os }}-pip-
+
+    - name: Install system dependencies (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential
+
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip wheel setuptools
+        pip install pytest pytest-cov pytest-xdist
+
+    - name: Install jaxonometrics
+      run: |
+        pip install -e .
+
+    - name: Install test dependencies
+      run: |
+        pip install pyfixest pandas scikit-learn
+
+    - name: Verify installation
+      run: |
+        python -c "import jaxonometrics; print('jaxonometrics version:', jaxonometrics.__version__)"
+        python -c "import jax; print('JAX version:', jax.__version__)"
+        python -c "import pyfixest; print('pyfixest available')"
+
+    - name: Run basic tests
+      run: |
+        python -m pytest tests/test_linear.py -v
+
+    - name: Run fixed effects tests
+      run: |
+        python -m pytest tests/test_fe.py -v
+
+    - name: Run all tests with coverage
+      run: |
+        python -m pytest tests/ -v --cov=jaxonometrics --cov-report=xml --cov-report=term
+
+    - name: Upload coverage to Codecov
+      if: matrix.python-version == '3.11' && matrix.os == 'ubuntu-latest'
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+
